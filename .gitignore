@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local environments and secrets
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+env/
+
+# Project data and generated heavy artifacts
+data/
+pretrained_models/
+
+# Audio archives and model/checkpoint files
+*.wav
+*.flac
+*.mp3
+*.m4a
+*.ogg
+*.tar
+*.tar.gz
+*.zip
+*.ckpt
+*.pt
+*.pth
+*.onnx
+*.npy
+*.npz
+
+# OS/editor noise
+.DS_Store
+._*
+.idea/
+.vscode/

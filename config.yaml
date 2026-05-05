@@ -1,0 +1,74 @@
+project:
+  random_seed: 42
+  output_dir: "data/results"
+
+audio:
+  librispeech_dir: "data/raw/librispeech_test_clean/LibriSpeech/test-clean"
+  sample_speakers: 30
+  clips_per_speaker: 5
+  min_duration_sec: 8
+  max_duration_sec: 20
+  target_sample_rate: 16000
+  target_channels: 1
+
+voice_deid:
+  method: "pitch_formant_perturbation"
+  pitch_shift_semitones: 2
+  speed_factor: 1.0
+  formant_proxy_enabled: false
+  output_dir: "data/processed/audio_voice_deidentified"
+
+speaker_embedding:
+  model_source: "speechbrain/spkrec-ecapa-voxceleb"
+  similarity_metric: "cosine"
+
+acoustic_features:
+  use_opensmile: false
+  opensmile_feature_set: "eGeMAPSv02"
+  opensmile_feature_level: "Functionals"
+
+semantic_generation:
+  n_transcripts: 150
+  batch_size: 10
+  model: "gpt-4.1-mini"
+  output_file: "data/raw/synthetic_generated/transcripts_raw.jsonl"
+
+semantic_deid:
+  use_presidio: true
+  use_spacy: true
+  use_custom_regex: true
+  custom_identifier_types:
+    - PERSON
+    - DATE
+    - LOCATION
+    - ORGANIZATION
+    - FAMILY_NAME
+    - SCHOOL_WORKPLACE
+    - ADDRESS
+    - CONTACT
+    - RARE_EVENT
+    - SESSION_PATTERN
+    - MEDICAL_RECORD
+    - CLINICIAN_NAME
+    - HEALTHCARE_ORGANIZATION
+
+metadata_generation:
+  n_records: 150
+  model: "gpt-4.1-mini"
+  output_file: "data/raw/synthetic_generated/metadata_raw.jsonl"
+
+metadata_sanitization:
+  target_sample_rate: 16000
+  target_channels: "mono"
+  remove_exact_timestamp: true
+  remove_device_model: true
+  remove_software_version: true
+  remove_location_tag: true
+  preserve_session_order: true
+  preserve_relative_interval: true
+
+evaluation:
+  direct_identifier_recall_target: 0.95
+  contextual_identifier_recall_target: 0.80
+  clinical_concept_preservation_target: 0.85
+  acoustic_feature_correlation_target: 0.70

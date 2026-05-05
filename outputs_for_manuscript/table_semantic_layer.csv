@@ -1,0 +1,9 @@
+metric,value
+overall_identifier_precision,1.0
+overall_identifier_recall,1.0
+overall_identifier_f1,1.0
+direct_identifier_recall,1.0
+contextual_identifier_recall,1.0
+residual_identifier_rate,0.0
+high_risk_residual_identifier_rate,0.0
+clinical_concept_preservation_rate,1.0

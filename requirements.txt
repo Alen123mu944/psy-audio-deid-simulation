@@ -1,0 +1,16 @@
+numpy
+pandas
+scipy
+scikit-learn
+matplotlib
+pyyaml
+soundfile
+librosa
+presidio-analyzer
+presidio-anonymizer
+spacy
+openai
+torch
+torchaudio
+speechbrain
+opensmile

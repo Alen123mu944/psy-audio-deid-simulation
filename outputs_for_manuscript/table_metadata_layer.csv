@@ -1,0 +1,7 @@
+metric,value
+metadata_leakage_rate_before,1.0
+metadata_leakage_rate_after,0.0
+field_sanitization_rate,1.0
+linkage_risk_score_before,1.0
+linkage_risk_score_after,0.0
+longitudinal_utility_preservation,1.0

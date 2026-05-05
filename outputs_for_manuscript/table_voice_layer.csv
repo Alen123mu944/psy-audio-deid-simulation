@@ -1,0 +1,6 @@
+metric,value
+speaker_id_accuracy_original,1.0
+speaker_id_accuracy_voice_deidentified,0.7933333333333333
+linkage_success_rate_original,1.0
+linkage_success_rate_voice_deidentified,0.7933333333333333
+acoustic_feature_preservation_excluding_f0,0.9515966809112921

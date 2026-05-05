@@ -1,0 +1,6 @@
+condition,speaker_id_accuracy,semantic_residual_identifier_rate,metadata_linkage_risk_score,clinical_concept_preservation,acoustic_feature_preservation,interpretation
+Original,1.0,1.0,1.0,1.0,1.0,Raw data retain clinical value but expose multi-source identifiers
+Voice-only,0.7933333333333333,1.0,1.0,1.0,0.9515966809112921,Voice identity risk is reduced but semantic and metadata risks remain
+Semantic-only,1.0,0.0,1.0,1.0,1.0,Textual identifiers are reduced but speaker and metadata risks remain
+Metadata-only,1.0,1.0,0.0,1.0,1.0,Auxiliary identifiers are reduced but voice and semantic risks remain
+Full_framework,0.7933333333333333,0.0,0.0,1.0,0.9515966809112921,Combined protection addresses multi-source re-identification risks
