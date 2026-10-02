@@ -10,7 +10,6 @@ markers. It is linked to the final JSONL by the offline verifier. The workbook
 and CSV are review evidence, not an assertion that every row was approved.
 
 gold_corrections.csv records only SIM059 PERSON Dana and SIM082 SESSION_PATTERN
-every other Tuesday. The before/after metric CSV and recalculation notes are
-historical evidence of that rescore. No further annotation change was made
-during package synchronization. Current authoritative results are under
-data/results/tables/ and outputs_for_manuscript/.
+every other Tuesday. The pre-correction raw input under provenance/ allows the
+verifier to establish these exact two additions. Current authoritative results
+are under outputs_for_manuscript/.

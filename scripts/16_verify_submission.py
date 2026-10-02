@@ -55,9 +55,6 @@ def semantic_tables():
         else:
             all_types.extend(types)
             all_subsets.extend(subsets)
-        if method == "full_semantic_layer":
-            computed["table_semantic_layer_wide.csv"] = [summary]
-            computed["table_semantic_layer.csv"] = [{"metric":k, "value":v} for k,v in summary.items() if k != "condition"]
     computed["table_semantic_comparison.csv"] = all_summary[:2]
     computed["table_semantic_comparison_with_qwen.csv"] = all_summary
     computed["table_semantic_by_type.csv"] = all_types
@@ -121,8 +118,7 @@ def main():
         print(f"PASS {method}: TP/FP/FN={counts}")
     tables = semantic_tables()
     for filename, actual in tables.items():
-        for folder in ("data/results/tables", "outputs_for_manuscript"):
-            compare_rows(actual, csv_rows(f"{folder}/{filename}"), f"{folder}/{filename}")
+        compare_rows(actual, csv_rows(f"outputs_for_manuscript/{filename}"), filename)
     compare_rows(tables["table_semantic_comparison_with_qwen.csv"], csv_rows("manuscript_tables/S2.csv"), "S2")
     compare_rows(tables["table_semantic_qwen_by_subset.csv"], csv_rows("manuscript_tables/S3.csv"), "S3 keyed subsets")
     logs = csv_rows("data/results/logs/qwen_semantic_deid_openrouter_log.csv")
@@ -131,9 +127,8 @@ def main():
     clean_metadata = jsonl("data/processed/metadata_sanitized/metadata_sanitized.jsonl")
     require(len(raw_metadata) == len(clean_metadata) == 150, "metadata count differs")
     metadata, subsets = evaluate_metadata(raw_metadata, clean_metadata)
-    for folder in ("data/results/tables", "outputs_for_manuscript"):
-        compare_rows(metadata, csv_rows(f"{folder}/table_metadata_layer.csv"), "metadata summary")
-        compare_rows(subsets, csv_rows(f"{folder}/table_metadata_by_subset.csv"), "metadata subsets")
+    compare_rows(metadata, csv_rows("outputs_for_manuscript/table_metadata_layer.csv"), "metadata summary")
+    compare_rows(subsets, csv_rows("outputs_for_manuscript/table_metadata_by_subset.csv"), "metadata subsets")
     qwen = tables["table_semantic_qwen_layer.csv"][0]
     matrix = csv_rows("outputs_for_manuscript/table_risk_utility_matrix.csv")
     require({r["condition"] for r in matrix} == {"Original","Voice-only","Semantic-only","Metadata-only","Full_framework"}, "matrix conditions differ")
@@ -154,7 +149,7 @@ def main():
         keys = ['speaker_id_accuracy','semantic_residual_identifier_rate','metadata_linkage_risk_score','clinical_concept_preservation','acoustic_feature_preservation']
         require(row[1:] == [f'{float(computed[k]):.3f}' for k in keys], f'main Table 6 differs: {row[0]}')
     print("PASS: 150 records; 744 gold (clean=250, contextual=251, ASR=243); unchanged predictions.")
-    print("PASS: all semantic CSVs in both output folders, S2/S3, metadata, review corrections and frozen hashes.")
+    print("PASS: canonical semantic CSVs, S2/S3, metadata, review corrections and frozen hashes.")
     print(f"Qwen: P={qwen['overall_identifier_precision']}, R={qwen['overall_identifier_recall']}, F1={qwen['overall_identifier_f1']}")
     print("Scope: frozen semantic/metadata results; not a new live-model run or raw-audio reproduction.")
 

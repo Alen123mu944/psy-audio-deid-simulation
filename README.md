@@ -15,7 +15,7 @@ python3 -B scripts/16_verify_submission.py
 
 The verifier checks frozen input/code hashes, record IDs and annotation offsets,
 the two recorded author corrections, all three sets of predictions, semantic
-summary/by-type/by-subset tables in both result folders, keyed S2/S3 exports,
+summary/by-type/by-subset tables in outputs_for_manuscript/, keyed S2/S3 exports,
 metadata results, and semantic values in the integrated risk-utility matrix.
 It independently recomputes metrics from JSONL records using the unchanged
 evaluation logic. A PASS does not certify clinical validity or exhaustive
@@ -30,7 +30,7 @@ python3 -B scripts/17_recompute_frozen.py
 ```
 
 This regenerates all active semantic tables, S2/S3 exports, metadata tables,
-integrated summaries and the Section 4 draft, then invokes verification.
+and integrated summaries, then invokes verification.
 It preserves frozen inputs and predictions and refuses changed source files.
 To regenerate figures as well, install matplotlib (tested dependencies are
 listed in requirements-verified.txt), then run:
@@ -56,9 +56,10 @@ Rounded to three decimal places these are 0.003, 0.000 and 0.983.
 - data/raw/synthetic_generated/: final transcript and metadata inputs.
 - data/processed/transcripts_deidentified/: all three methods, each using
   the same locked gold annotations; saved predictions are unchanged.
-- data/results/tables/ and outputs_for_manuscript/: current results.
+- outputs_for_manuscript/: canonical result tables and figures.
+- data/results/tables/: voice source aggregates, similarity observations and audio audit.
 - manuscript_tables/S2.csv and S3.csv: keyed, full-precision manuscript exports.
-- review/: locked review export, author-confirmed correction log and rescore notes.
+- review/: locked review export and author-confirmed correction log.
 - FROZEN_MANIFEST.json: version, hashes, counts, correction and prediction signatures.
 - provenance/transcripts_pre_correction_742.jsonl: historical input solely for
   verifying the two additions; not an active evaluation input.
@@ -69,6 +70,9 @@ See REPRODUCIBILITY_STATEMENT.md for provenance and reproducibility boundaries.
 The author-review workbook and historical aggregate duplicates remain in the
 local submission package; this repository includes the CSV correction and review
 records needed for offline verification. Full manuscript Word files are excluded.
+Intermediate semantic and metadata CSVs under data/results/tables/ are recreated
+by the scripts when needed and ignored by Git; final tables have one tracked copy
+in outputs_for_manuscript/. S2/S3 exports retain their manuscript table names.
 
 ## New API runs and audio reproduction
 

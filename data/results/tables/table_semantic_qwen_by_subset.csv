@@ -1,4 +1,0 @@
-condition,subset,n_records,n_gold_identifiers,n_predicted_identifiers,overall_identifier_precision,overall_identifier_recall,overall_identifier_f1,direct_identifier_recall,contextual_identifier_recall,residual_identifier_rate,high_risk_residual_identifier_rate,clinical_concept_preservation_rate,over_redaction_rate
-qwen_llm_semantic_layer,asr_noisy,50.0,243.0,255.0,0.9529411764705882,1.0,0.9759036144578312,1.0,1.0,0.0,0.0,0.9783333333333333,0.021666666666666723
-qwen_llm_semantic_layer,clean_direct,50.0,250.0,254.0,0.984251968503937,1.0,0.9920634920634921,1.0,1.0,0.0,0.0,1.0,0.0
-qwen_llm_semantic_layer,contextual_paraphrased,50.0,251.0,268.0,0.9291044776119403,0.9920318725099602,0.9595375722543351,1.0,0.989010989010989,0.00796812749003984,0.0,0.97,0.030000000000000027

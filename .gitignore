@@ -41,3 +41,7 @@ pretrained_models/
 ._*
 .idea/
 .vscode/
+
+# Local manuscript copies and obsolete generated prose
+review_inputs/
+outputs_for_manuscript/manuscript_section4_draft.md

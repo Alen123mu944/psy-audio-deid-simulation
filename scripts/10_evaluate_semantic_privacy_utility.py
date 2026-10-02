@@ -47,10 +47,7 @@ def main() -> None:
     write_csv("data/results/tables/table_semantic_by_type.csv", by_type_rows, BY_TYPE_FIELDS)
     write_csv("data/results/tables/table_semantic_by_subset.csv", by_subset_rows, BY_SUBSET_FIELDS)
 
-    full_summary = next(row for row in summary_rows if row["condition"] == "full_semantic_layer")
-    metric_rows = [{"metric": key, "value": value} for key, value in full_summary.items() if key != "condition"]
-    write_csv("data/results/tables/table_semantic_layer.csv", metric_rows, ["metric", "value"])
-    print("Wrote semantic comparison, by-type, by-subset, and manuscript compatibility tables.")
+    print("Wrote semantic comparison, by-type and by-subset tables.")
 
 
 if __name__ == "__main__":

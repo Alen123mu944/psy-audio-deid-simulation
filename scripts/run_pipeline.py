@@ -39,7 +39,6 @@ STAGES: dict[str, list[str]] = {
     "manuscript": [
         "scripts/13_generate_summary_tables.py",
         "scripts/14_generate_figures.py",
-        "scripts/15_check_reproducibility.py",
     ],
 }
 STAGES["semantic"] = STAGES["semantic-baseline"] + STAGES["semantic-qwen"]
