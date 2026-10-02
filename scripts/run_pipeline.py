@@ -27,7 +27,7 @@ STAGES: dict[str, list[str]] = {
         "scripts/10_evaluate_semantic_privacy_utility.py",
     ],
     "semantic-qwen": [
-        "scripts/09b_semantic_deidentify_siliconflow_qwen.py",
+        "scripts/09c_semantic_deidentify_openrouter_qwen.py",
         "scripts/10b_evaluate_qwen_semantic.py",
     ],
     "metadata": [
@@ -46,7 +46,7 @@ STAGES["all"] = STAGES["voice"] + STAGES["semantic"] + STAGES["metadata"] + STAG
 
 REQUIRED_ENV = {
     "scripts/02_generate_synthetic_transcripts_openrouter.py": "OPENROUTER_API_KEY",
-    "scripts/09b_semantic_deidentify_siliconflow_qwen.py": "SILICONFLOW_API_KEY",
+    "scripts/09c_semantic_deidentify_openrouter_qwen.py": "OPENROUTER_API_KEY",
 }
 
 
