@@ -2,7 +2,7 @@
 
 Paper: *A Multi-layer De-identification Framework for Psychiatric Audio Recordings: Balancing Clinical Utility and Privacy Protection*.
 
-Code and synthetic data supporting the manuscript: **150 transcripts, 744 gold labels**.
+Code and synthetic data supporting the manuscript.
 
 Verify and recompute results offline with Python 3.11+:
 
