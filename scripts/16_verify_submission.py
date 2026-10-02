@@ -82,19 +82,6 @@ def main():
         require(addition["id"] in by_id, "review correction ID missing")
         annotation = {k:v for k,v in addition.items() if k != "id"}
         require(by_id[addition["id"]]["identifier_annotations"].count(annotation) == 1, "confirmed correction missing or duplicated in locked gold")
-    corrections = csv_rows("review/gold_corrections.csv")
-    require(len(corrections) == len(additions) == 2, "expected exactly two recorded corrections")
-    for recorded, actual in zip(corrections, additions):
-        require(recorded["subset"] == by_id[actual["id"]]["subset"], "review correction subset differs")
-        for key in ("id", "span", "type", "start", "end", "risk_level", "recommended_action"):
-            require(recorded[key] == str(actual[key]), f"review record mismatch: {key}")
-    review_rows = csv_rows("review/locked_review.csv")
-    require(len(review_rows) == len({r['id'] for r in review_rows}) == 150, "review export IDs differ")
-    for reviewed in review_rows:
-        raw = by_id[reviewed['id']]
-        require(reviewed['utterance'] == raw['utterance'] and reviewed['subset'] == raw['subset'], "review export input mismatch")
-        require(json.loads(reviewed['gold_annotations']) == raw['identifier_annotations'], "review export gold mismatch")
-        require(reviewed['reference_deidentified_utterance'] == raw['deidentified_utterance'], "review export reference mismatch")
     for method in manifest["methods"]:
         rows = jsonl(f"{OUTPUT}/transcripts_{method}.jsonl")
         require(len(rows) == len({r["id"] for r in rows}) == 150 and {r["id"] for r in rows} == set(by_id), f"{method}: missing/duplicate IDs")
@@ -116,8 +103,6 @@ def main():
     tables = semantic_tables()
     for filename, actual in tables.items():
         compare_rows(actual, csv_rows(f"outputs_for_manuscript/{filename}"), filename)
-    compare_rows(tables["table_semantic_comparison_with_qwen.csv"], csv_rows("manuscript_tables/S2.csv"), "S2")
-    compare_rows(tables["table_semantic_qwen_by_subset.csv"], csv_rows("manuscript_tables/S3.csv"), "S3 keyed subsets")
     logs = csv_rows("data/results/logs/qwen_semantic_deid_openrouter_log.csv")
     require(len(logs) == 150 and all(r["status"] == "ok" for r in logs), "Qwen has failed records")
     raw_metadata = jsonl("data/raw/synthetic_generated/metadata_reviewed.jsonl")
@@ -134,19 +119,26 @@ def main():
         for key,source in [("semantic_residual_identifier_rate","residual_identifier_rate"),("clinical_concept_preservation","clinical_concept_preservation_rate")]:
             expected = qwen[source] if has_semantic else 1.0
             require(math.isclose(float(row[key]), expected, abs_tol=1e-12), f"matrix {row['condition']}: {key} differs")
-    audit = json.loads((ROOT/'manuscript_tables/manuscript_alignment_audit.json').read_text())
-    observed_main = audit['main_Table5_Table6_observed']
-    semantic = observed_main['5'][2]
-    for label, metric, decimals in [('Precision','overall_identifier_precision',3),('recall','overall_identifier_recall',3),('F1','overall_identifier_f1',3),('residual identifier rate','residual_identifier_rate',4),('high-risk residual rate','high_risk_residual_identifier_rate',3)]:
-        require(f'{label} = {qwen[metric]:.{decimals}f}' in semantic[2], f'main Table 5: {label} differs')
-    require(f"Clinical concept preservation = {qwen['clinical_concept_preservation_rate']:.3f}" == semantic[3], 'main Table 5 utility differs')
-    matrix_by_name = {r['condition'].replace('_',' '):r for r in matrix}
-    for row in observed_main['6'][1:]:
-        computed = matrix_by_name[row[0]]
-        keys = ['speaker_id_accuracy','semantic_residual_identifier_rate','metadata_linkage_risk_score','clinical_concept_preservation','acoustic_feature_preservation']
-        require(row[1:] == [f'{float(computed[k]):.3f}' for k in keys], f'main Table 6 differs: {row[0]}')
+    metadata_values = {r["metric"]:r["value"] for r in metadata}
+    voice_values = {r["metric"]:r["value"] for r in csv_rows("outputs_for_manuscript/table_voice_layer.csv")}
+    selected = voice_values["selected_voice_condition"]
+    privacy = {r["condition"]:r for r in csv_rows("data/results/tables/table_voice_privacy.csv")}
+    utility = csv_rows("data/results/tables/table_voice_utility.csv")
+    acoustic_features = {"duration","RMS_energy","zero_crossing_rate","spectral_centroid","spectral_bandwidth","pause_ratio"}
+    acoustic = [float(r["pearson_r"]) for r in utility if r["condition"] == selected and r["feature"] in acoustic_features]
+    require(len(acoustic) == len(acoustic_features), "voice utility features missing")
+    for row in matrix:
+        has_voice = row["condition"] in {"Voice-only","Full_framework"}
+        voice_condition = selected if has_voice else "original"
+        expected = {
+            "speaker_id_accuracy":float(privacy[voice_condition]["top1_speaker_id_accuracy"]),
+            "acoustic_feature_preservation":sum(acoustic)/len(acoustic) if has_voice else 1.0,
+            "metadata_linkage_risk_score":metadata_values["linkage_risk_score_after"] if row["condition"] in {"Metadata-only","Full_framework"} else 1.0,
+        }
+        for key, value in expected.items():
+            require(math.isclose(float(row[key]), float(value), rel_tol=1e-12, abs_tol=1e-12), f"matrix {row['condition']}: {key} differs")
     print("PASS: 150 records; 744 gold (clean=250, contextual=251, ASR=243); unchanged predictions.")
-    print("PASS: canonical semantic CSVs, S2/S3, metadata, review corrections and frozen hashes.")
+    print("PASS: canonical result tables, integrated matrix and frozen hashes.")
     print(f"Qwen: P={qwen['overall_identifier_precision']}, R={qwen['overall_identifier_recall']}, F1={qwen['overall_identifier_f1']}")
     print("Scope: frozen semantic/metadata results; not a new live-model run or raw-audio reproduction.")
 

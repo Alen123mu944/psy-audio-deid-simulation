@@ -27,8 +27,6 @@ def main():
     for name, rows in tables.items():
         for folder in ("data/results/tables", "outputs_for_manuscript"):
             write_csv(ROOT/folder/name, rows)
-    write_csv(ROOT/"manuscript_tables/S2.csv", tables["table_semantic_comparison_with_qwen.csv"])
-    write_csv(ROOT/"manuscript_tables/S3.csv", tables["table_semantic_qwen_by_subset.csv"])
     for script in ("12_evaluate_metadata_privacy_utility.py", "13_generate_summary_tables.py"):
         subprocess.run([sys.executable, "-B", str(ROOT/"scripts"/script)], check=True, cwd=ROOT)
     verify.main()
