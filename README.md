@@ -4,15 +4,13 @@ Paper: *A Multi-layer De-identification Framework for Psychiatric Audio Recordin
 
 Code and synthetic data supporting the manuscript.
 
-Verify and recompute results offline with Python 3.11+:
+Offline verification and table recomputation (Python 3.11+; no API key or third-party packages):
 
 ```bash
 python3 scripts/16_verify_submission.py
 python3 scripts/17_recompute_frozen.py
 ```
 
-Inputs and predictions: `data/`. Results: `outputs_for_manuscript/`.
-Offline checks require no API key or third-party packages. Full experiments use
-`requirements.txt`, LibriSpeech and `OPENROUTER_API_KEY`; run new batches in a separate copy.
-
-Provenance: [REPRODUCIBILITY_STATEMENT.md](REPRODUCIBILITY_STATEMENT.md).
+Data and predictions: `data/`. Tables and figures: `outputs_for_manuscript/`.
+Full experiments require `requirements.txt`, public LibriSpeech audio and `OPENROUTER_API_KEY`.
+Run new experiments in a separate copy; live model outputs may vary.
