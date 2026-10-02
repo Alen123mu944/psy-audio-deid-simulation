@@ -1,0 +1,4 @@
+metadata_subset,n_records,direct_metadata_leakage_before,direct_metadata_leakage_after,filename_path_leakage_before,filename_path_leakage_after,free_text_context_leakage_before,free_text_context_leakage_after,linkage_risk_score_before,linkage_risk_score_after,longitudinal_utility_preservation,audio_standardization_success
+filename_path_leakage,50,1.0,0.0,1.0,0.0,0.0,0.0,0.8500000000000001,0.07,1.0,1.0
+free_text_context,50,1.0,0.0,0.0,0.0,1.0,0.0,0.8,0.07,1.0,1.0
+structured_standard,50,1.0,0.0,0.0,0.0,0.0,0.0,0.65,0.07,1.0,1.0

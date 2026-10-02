@@ -5,6 +5,9 @@ import _bootstrap  # noqa: F401
 from src.io_utils import ensure_dir, read_csv_dicts
 
 
+SELECTED_VOICE_CONDITION = "pitch_s4"
+
+
 def workflow_figure(out_dir) -> None:
     import matplotlib.pyplot as plt
 
@@ -14,7 +17,7 @@ def workflow_figure(out_dir) -> None:
         (0.08, 0.70, "Public/synthetic\naudio"),
         (0.38, 0.70, "Synthetic\ntranscripts"),
         (0.68, 0.70, "Synthetic\nmetadata"),
-        (0.08, 0.40, "Voice\ntransformation"),
+        (0.08, 0.40, "Voice method\ncomparison"),
         (0.38, 0.40, "Semantic\nde-identification"),
         (0.68, 0.40, "Metadata\nsanitization"),
         (0.38, 0.12, "Privacy metrics + utility metrics\nRisk-utility matrix"),
@@ -29,14 +32,27 @@ def workflow_figure(out_dir) -> None:
     plt.close(fig)
 
 
+def _selected_condition_from_voice_layer() -> str:
+    rows = read_csv_dicts("outputs_for_manuscript/table_voice_layer.csv")
+    for row in rows:
+        if row.get("metric") == "selected_voice_condition":
+            return row.get("value") or SELECTED_VOICE_CONDITION
+    return SELECTED_VOICE_CONDITION
+
+
 def similarity_figure(out_dir) -> None:
     import matplotlib.pyplot as plt
 
+    selected = _selected_condition_from_voice_layer()
     rows = read_csv_dicts("data/results/tables/speaker_similarity_distributions.csv")
-    groups = ["original_same_speaker", "original_vs_deidentified", "different_speaker"]
+    groups = ["original_same_speaker", f"original_vs_{selected}", "different_speaker"]
     data = [[float(row["cosine_similarity"]) for row in rows if row["condition"] == group] for group in groups]
     fig, ax = plt.subplots(figsize=(8, 5))
-    ax.boxplot(data, labels=["Original same\nspeaker", "Original vs\nDe-ID", "Different\nspeaker"])
+    labels = ["Original same\nspeaker", f"Original vs\n{selected}", "Different\nspeaker"]
+    try:
+        ax.boxplot(data, tick_labels=labels)
+    except TypeError:
+        ax.boxplot(data, labels=labels)
     ax.set_ylabel("Cosine similarity")
     ax.set_title("Speaker Similarity Distribution")
     fig.tight_layout()
@@ -48,13 +64,18 @@ def risk_reduction_figure(out_dir) -> None:
     import matplotlib.pyplot as plt
 
     rows = read_csv_dicts("outputs_for_manuscript/table_risk_utility_matrix.csv")
+    original = next((row for row in rows if row["condition"] == "Original"), {})
     full = next((row for row in rows if row["condition"] == "Full_framework"), {})
     labels = ["Speaker re-ID", "Semantic leakage", "Metadata linkage"]
-    before = [0.91, 1.0, 1.0]
+    before = [
+        float(original.get("speaker_id_accuracy", 1.0)),
+        float(original.get("semantic_residual_identifier_rate", 1.0)),
+        float(original.get("metadata_linkage_risk_score", 1.0)),
+    ]
     after = [
-        float(full.get("speaker_id_accuracy", 0.42)),
-        float(full.get("semantic_residual_identifier_rate", 0.1)),
-        float(full.get("metadata_linkage_risk_score", 0.05)),
+        float(full.get("speaker_id_accuracy", 0.0)),
+        float(full.get("semantic_residual_identifier_rate", 0.0)),
+        float(full.get("metadata_linkage_risk_score", 0.0)),
     ]
     x = range(len(labels))
     fig, ax = plt.subplots(figsize=(8, 5))

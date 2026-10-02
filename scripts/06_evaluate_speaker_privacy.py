@@ -11,9 +11,13 @@ def main() -> None:
     if not rows:
         raise SystemExit("speaker_embedding_manifest.csv not found. Run 05_extract_speaker_embeddings.py first.")
     summary, similarities = evaluate_embeddings(rows)
-    write_csv("data/results/tables/table_voice_privacy.csv", summary, ["condition", "mean_cosine_similarity", "top1_speaker_id_accuracy", "linkage_success_rate"])
+    write_csv(
+        "data/results/tables/table_voice_privacy.csv",
+        summary,
+        ["condition", "method", "parameter", "mean_cosine_similarity", "top1_speaker_id_accuracy", "linkage_success_rate", "speaker_verification_eer"],
+    )
     write_csv("data/results/tables/speaker_similarity_distributions.csv", similarities, ["condition", "cosine_similarity"])
-    print("Wrote real speaker privacy tables from SpeechBrain embeddings.")
+    print("Wrote real speaker privacy tables from SpeechBrain embeddings, including EER.")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,2 @@
+condition,n_records,n_gold_identifiers,n_predicted_identifiers,overall_identifier_precision,overall_identifier_recall,overall_identifier_f1,direct_identifier_recall,contextual_identifier_recall,residual_identifier_rate,high_risk_residual_identifier_rate,clinical_concept_preservation_rate,over_redaction_rate
+qwen_llm_semantic_layer,150.0,744.0,777.0,0.954954954954955,0.9973118279569892,0.9756738987508218,1.0,0.993103448275862,0.002688172043010753,0.0,0.9827777777777778,0.01722222222222225

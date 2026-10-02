@@ -2,8 +2,15 @@ from __future__ import annotations
 
 import _bootstrap  # noqa: F401
 
-from src.acoustic_metrics import feature_rows_for_pair
+from src.acoustic_metrics import extract_librosa_features
 from src.io_utils import load_config, project_path, read_csv_dicts, write_csv
+
+
+def feature_row(audio_id: str, condition: str, path: str, target_sample_rate: int) -> dict:
+    features = extract_librosa_features(project_path(path), target_sample_rate)
+    row = {"audio_id": audio_id, "condition": condition}
+    row.update(features)
+    return row
 
 
 def main() -> None:
@@ -11,17 +18,15 @@ def main() -> None:
     mapping = read_csv_dicts("data/processed/mappings/voice_deid_mapping.csv")
     if not mapping:
         raise SystemExit("voice_deid_mapping.csv not found. Run 04_voice_deidentify.py first.")
+    manifest = read_csv_dicts("data/processed/audio_original/audio_manifest.csv")
+    target_sample_rate = int(cfg["audio"]["target_sample_rate"])
 
     rows = []
+    for item in manifest:
+        rows.append(feature_row(item["audio_id"], "original", item["original_path"], target_sample_rate))
     for item in mapping:
-        rows.extend(
-            feature_rows_for_pair(
-                item["audio_id"],
-                project_path(item["original_path"]),
-                project_path(item["deidentified_path"]),
-                int(cfg["audio"]["target_sample_rate"]),
-            )
-        )
+        rows.append(feature_row(item["audio_id"], item.get("condition", "voice_deidentified"), item["deidentified_path"], target_sample_rate))
+
     fieldnames = [
         "audio_id",
         "condition",

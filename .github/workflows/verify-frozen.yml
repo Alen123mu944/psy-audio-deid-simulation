@@ -1,0 +1,22 @@
+name: Verify frozen manuscript results
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Verify frozen gold744 results
+        run: python -B -S scripts/16_verify_submission.py
+      - name: Recompute tables offline
+        run: python -B -S scripts/17_recompute_frozen.py

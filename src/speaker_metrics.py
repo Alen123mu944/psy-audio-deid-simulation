@@ -2,24 +2,9 @@ from __future__ import annotations
 
 from collections import defaultdict
 from itertools import combinations
-import random
-
 import numpy as np
 
-
-def simulate_speaker_privacy(seed: int = 42) -> tuple[list[dict], list[dict]]:
-    rng = random.Random(seed)
-    similarities = []
-    for _ in range(200):
-        similarities.append({"condition": "original_same_speaker", "cosine_similarity": rng.uniform(0.72, 0.92)})
-        similarities.append({"condition": "original_vs_deidentified", "cosine_similarity": rng.uniform(0.38, 0.68)})
-        similarities.append({"condition": "different_speaker", "cosine_similarity": rng.uniform(0.05, 0.35)})
-    summary = [
-        {"condition": "original", "mean_cosine_similarity": 0.82, "top1_speaker_id_accuracy": 0.91, "linkage_success_rate": 0.88},
-        {"condition": "voice_only", "mean_cosine_similarity": 0.53, "top1_speaker_id_accuracy": 0.42, "linkage_success_rate": 0.39},
-        {"condition": "full_framework", "mean_cosine_similarity": 0.53, "top1_speaker_id_accuracy": 0.42, "linkage_success_rate": 0.39},
-    ]
-    return summary, similarities
+from .io_utils import project_path
 
 
 def cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
@@ -40,23 +25,54 @@ def nearest_centroid_accuracy(test_items: list[dict], centroids: dict[str, np.nd
     return correct / len(test_items)
 
 
+def verification_trials(test_items: list[dict], centroids: dict[str, np.ndarray]) -> tuple[np.ndarray, np.ndarray]:
+    labels = []
+    scores = []
+    for item in test_items:
+        for speaker, centroid in centroids.items():
+            labels.append(1 if speaker == item["speaker_id"] else 0)
+            scores.append(cosine_similarity(item["embedding"], centroid))
+    return np.asarray(labels, dtype=int), np.asarray(scores, dtype=float)
+
+
+def equal_error_rate(labels: np.ndarray, scores: np.ndarray) -> float:
+    if labels.size == 0 or np.sum(labels == 1) == 0 or np.sum(labels == 0) == 0:
+        return 0.0
+    thresholds = np.r_[np.inf, np.sort(np.unique(scores))[::-1], -np.inf]
+    best = 1.0
+    for threshold in thresholds:
+        predicted = scores >= threshold
+        false_reject_rate = np.sum((~predicted) & (labels == 1)) / np.sum(labels == 1)
+        false_accept_rate = np.sum(predicted & (labels == 0)) / np.sum(labels == 0)
+        eer = (false_reject_rate + false_accept_rate) / 2
+        if abs(false_reject_rate - false_accept_rate) < best:
+            best = abs(false_reject_rate - false_accept_rate)
+            best_eer = eer
+    return float(best_eer)
+
+
+def _load_embedding(path: str) -> np.ndarray:
+    return np.load(project_path(path))
+
+
 def evaluate_embeddings(rows: list[dict]) -> tuple[list[dict], list[dict]]:
     items = []
     for row in rows:
-        embedding = np.load(row["embedding_path"])
+        embedding = _load_embedding(row["embedding_path"])
         items.append(
             {
                 "audio_id": row["audio_id"],
                 "speaker_id": row["speaker_id"],
                 "condition": row["condition"],
+                "method": row.get("voice_deid_method", ""),
+                "parameter": row.get("parameter", ""),
                 "embedding": embedding.reshape(-1),
             }
         )
 
     original = [item for item in items if item["condition"] == "original"]
-    deidentified = [item for item in items if item["condition"] == "voice_deidentified"]
+    conditions = sorted({item["condition"] for item in items if item["condition"] != "original"})
     original_by_id = {item["audio_id"]: item for item in original}
-    deid_by_id = {item["audio_id"]: item for item in deidentified}
 
     similarities = []
     original_by_speaker: dict[str, list[dict]] = defaultdict(list)
@@ -70,54 +86,54 @@ def evaluate_embeddings(rows: list[dict]) -> tuple[list[dict], list[dict]]:
             same_speaker_scores.append(score)
             similarities.append({"condition": "original_same_speaker", "cosine_similarity": score})
 
-    original_deid_scores = []
-    for audio_id, original_item in original_by_id.items():
-        if audio_id in deid_by_id:
-            score = cosine_similarity(original_item["embedding"], deid_by_id[audio_id]["embedding"])
-            original_deid_scores.append(score)
-            similarities.append({"condition": "original_vs_deidentified", "cosine_similarity": score})
-
-    different_speaker_scores = []
     for a, b in combinations(original, 2):
         if a["speaker_id"] != b["speaker_id"]:
-            score = cosine_similarity(a["embedding"], b["embedding"])
-            different_speaker_scores.append(score)
-            similarities.append({"condition": "different_speaker", "cosine_similarity": score})
+            similarities.append({"condition": "different_speaker", "cosine_similarity": cosine_similarity(a["embedding"], b["embedding"])})
 
     enrollment_by_speaker: dict[str, list[np.ndarray]] = defaultdict(list)
     original_test = []
-    deid_test = []
     for item in original:
         clip_number = int(item["audio_id"].split("_C")[-1])
         if clip_number <= 3:
             enrollment_by_speaker[item["speaker_id"]].append(item["embedding"])
         else:
             original_test.append(item)
-    for item in deidentified:
-        deid_test.append(item)
-
     centroids = {speaker: np.mean(embeddings, axis=0) for speaker, embeddings in enrollment_by_speaker.items() if embeddings}
-    original_accuracy = nearest_centroid_accuracy(original_test, centroids)
-    deid_accuracy = nearest_centroid_accuracy(deid_test, centroids)
 
+    labels, scores = verification_trials(original_test, centroids)
     summary = [
         {
             "condition": "original",
+            "method": "original",
+            "parameter": "-",
             "mean_cosine_similarity": float(np.mean(same_speaker_scores)) if same_speaker_scores else 0.0,
-            "top1_speaker_id_accuracy": original_accuracy,
-            "linkage_success_rate": original_accuracy,
-        },
-        {
-            "condition": "voice_only",
-            "mean_cosine_similarity": float(np.mean(original_deid_scores)) if original_deid_scores else 0.0,
-            "top1_speaker_id_accuracy": deid_accuracy,
-            "linkage_success_rate": deid_accuracy,
-        },
-        {
-            "condition": "full_framework",
-            "mean_cosine_similarity": float(np.mean(original_deid_scores)) if original_deid_scores else 0.0,
-            "top1_speaker_id_accuracy": deid_accuracy,
-            "linkage_success_rate": deid_accuracy,
-        },
+            "top1_speaker_id_accuracy": nearest_centroid_accuracy(original_test, centroids),
+            "linkage_success_rate": nearest_centroid_accuracy(original_test, centroids),
+            "speaker_verification_eer": equal_error_rate(labels, scores),
+        }
     ]
+
+    for condition in conditions:
+        condition_items = [item for item in items if item["condition"] == condition]
+        original_deid_scores = []
+        for item in condition_items:
+            if item["audio_id"] in original_by_id:
+                score = cosine_similarity(original_by_id[item["audio_id"]]["embedding"], item["embedding"])
+                original_deid_scores.append(score)
+                similarities.append({"condition": f"original_vs_{condition}", "cosine_similarity": score})
+        labels, scores = verification_trials(condition_items, centroids)
+        method = condition_items[0].get("method", "") if condition_items else ""
+        parameter = condition_items[0].get("parameter", "") if condition_items else ""
+        accuracy = nearest_centroid_accuracy(condition_items, centroids)
+        summary.append(
+            {
+                "condition": condition,
+                "method": method,
+                "parameter": parameter,
+                "mean_cosine_similarity": float(np.mean(original_deid_scores)) if original_deid_scores else 0.0,
+                "top1_speaker_id_accuracy": accuracy,
+                "linkage_success_rate": accuracy,
+                "speaker_verification_eer": equal_error_rate(labels, scores),
+            }
+        )
     return summary, similarities

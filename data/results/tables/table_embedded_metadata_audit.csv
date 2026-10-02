@@ -1,0 +1,4 @@
+file_group,n_files_scanned,n_files_readable,formats,sample_rate_set,channel_set,bit_depth_set,has_comment_block,has_non_audio_chunks,embedded_sensitive_metadata_present,technical_metadata_only
+raw_librispeech_flac,2620,2620,FLAC,16000,1,16,True,True,False,True
+processed_original_wav,150,150,WAV,16000,1,16,False,False,False,True
+voice_deidentified_pitch_s4_wav,150,150,WAV,16000,1,16,False,False,False,True

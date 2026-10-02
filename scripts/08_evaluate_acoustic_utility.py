@@ -11,8 +11,12 @@ def main() -> None:
     if not feature_rows:
         raise SystemExit("acoustic_features_librosa.csv not found. Run 07_extract_acoustic_features.py first.")
     rows = evaluate_feature_preservation(feature_rows)
-    write_csv("data/results/tables/table_voice_utility.csv", rows, ["feature", "pearson_r", "mean_absolute_error", "relative_change_mean", "preservation_interpretation"])
-    print("Wrote voice acoustic utility table.")
+    write_csv(
+        "data/results/tables/table_voice_utility.csv",
+        rows,
+        ["condition", "feature", "pearson_r", "mean_absolute_error", "relative_change_mean", "preservation_interpretation"],
+    )
+    print("Wrote voice acoustic utility table by method condition.")
 
 
 if __name__ == "__main__":

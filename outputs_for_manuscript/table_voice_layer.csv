@@ -1,6 +1,8 @@
 metric,value
+selected_voice_condition,pitch_s4
 speaker_id_accuracy_original,1.0
-speaker_id_accuracy_voice_deidentified,0.7933333333333333
-linkage_success_rate_original,1.0
-linkage_success_rate_voice_deidentified,0.7933333333333333
-acoustic_feature_preservation_excluding_f0,0.9515966809112921
+speaker_id_accuracy_selected,0.24666666666666667
+speaker_verification_eer_original,0.0
+speaker_verification_eer_selected,0.26666666666666666
+non_f0_acoustic_preservation_selected,0.9270061590019164
+pause_ratio_pcc_selected,0.9398240302894216

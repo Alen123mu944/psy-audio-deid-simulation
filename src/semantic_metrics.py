@@ -4,8 +4,8 @@ from collections import Counter, defaultdict
 from typing import Any
 
 
-DIRECT_TYPES = {"PERSON", "CONTACT", "ADDRESS", "MEDICAL_RECORD", "CLINICIAN_NAME"}
-CONTEXTUAL_TYPES = {"LOCATION", "ORGANIZATION", "HEALTHCARE_ORGANIZATION", "SCHOOL_WORKPLACE", "FAMILY_NAME", "RARE_EVENT", "SESSION_PATTERN", "DATE", "DATE_TIME"}
+DIRECT_TYPES = {"PERSON", "CONTACT", "ADDRESS", "MEDICAL_RECORD", "CLINICIAN_NAME", "DATE", "DATE_TIME"}
+CONTEXTUAL_TYPES = {"LOCATION", "ORGANIZATION", "HEALTHCARE_ORGANIZATION", "SCHOOL_WORKPLACE", "FAMILY_NAME", "RARE_EVENT", "SESSION_PATTERN"}
 COMPATIBLE_TYPES = {
     "DATE": {"DATE", "DATE_TIME"},
     "DATE_TIME": {"DATE", "DATE_TIME"},
@@ -13,6 +13,7 @@ COMPATIBLE_TYPES = {
     "HEALTHCARE_ORGANIZATION": {"ORGANIZATION", "HEALTHCARE_ORGANIZATION"},
     "PERSON": {"PERSON", "CLINICIAN_NAME", "FAMILY_NAME"},
     "CLINICIAN_NAME": {"PERSON", "CLINICIAN_NAME"},
+    "FAMILY_NAME": {"PERSON", "FAMILY_NAME"},
     "LOCATION": {"LOCATION", "ADDRESS"},
     "ADDRESS": {"LOCATION", "ADDRESS"},
 }
@@ -59,11 +60,11 @@ def clinical_concept_preservation(row: dict[str, Any]) -> float:
     return kept / len(concepts)
 
 
-def evaluate_semantic(rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+def _evaluate_counts(rows: list[dict[str, Any]]) -> tuple[dict[str, float], dict[str, Counter]]:
     total_tp = total_fp = total_fn = 0
     direct_tp = direct_fn = contextual_tp = contextual_fn = 0
+    high_risk_gold = high_risk_fn = 0
     type_counts = defaultdict(lambda: Counter(tp=0, fp=0, fn=0, gold=0, detected=0))
-    residual = []
     preservation_scores = []
 
     for row in rows:
@@ -71,6 +72,7 @@ def evaluate_semantic(rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]],
         pred = row.get("predicted_identifier_annotations", [])
         tp, fp, fn, matches = match_annotations(gold, pred)
         matched_gold = {m["gold_index"] for m in matches}
+        matched_pred = {m["pred_index"] for m in matches}
         total_tp += tp
         total_fp += fp
         total_fn += fn
@@ -78,42 +80,82 @@ def evaluate_semantic(rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]],
         for idx, g in enumerate(gold):
             typ = str(g.get("type"))
             type_counts[typ]["gold"] += 1
-            if idx in matched_gold:
-                type_counts[typ]["tp"] += 1
+            is_matched = idx in matched_gold
+            if is_matched:
                 if typ in DIRECT_TYPES:
                     direct_tp += 1
                 if typ in CONTEXTUAL_TYPES:
                     contextual_tp += 1
             else:
-                type_counts[typ]["fn"] += 1
-                residual.append(g)
-            if typ in DIRECT_TYPES:
-                direct_fn += 0 if idx in matched_gold else 1
-            if typ in CONTEXTUAL_TYPES:
-                contextual_fn += 0 if idx in matched_gold else 1
+                if typ in DIRECT_TYPES:
+                    direct_fn += 1
+                if typ in CONTEXTUAL_TYPES:
+                    contextual_fn += 1
+            if str(g.get("risk_level", "")).lower() == "high" or typ in {"CONTACT", "ADDRESS", "MEDICAL_RECORD", "CLINICIAN_NAME", "PERSON"}:
+                high_risk_gold += 1
+                if not is_matched:
+                    high_risk_fn += 1
         for p in pred:
             type_counts[str(p.get("type"))]["detected"] += 1
-        for pidx, p in enumerate(pred):
-            if pidx not in {m["pred_index"] for m in matches}:
-                type_counts[str(p.get("type"))]["fp"] += 1
+        for match in matches:
+            gold_type = str(gold[match["gold_index"]].get("type"))
+            pred_type = str(pred[match["pred_index"]].get("type"))
+            if gold_type == pred_type:
+                type_counts[gold_type]["tp"] += 1
+        for typ, counts in type_counts.items():
+            counts["fn"] = counts["gold"] - counts["tp"]
+            counts["fp"] = counts["detected"] - counts["tp"]
 
     precision, recall, f1 = prf(total_tp, total_fp, total_fn)
     direct_recall = direct_tp / (direct_tp + direct_fn) if direct_tp + direct_fn else 0.0
     contextual_recall = contextual_tp / (contextual_tp + contextual_fn) if contextual_tp + contextual_fn else 0.0
     residual_rate = total_fn / (total_tp + total_fn) if total_tp + total_fn else 0.0
-    high_risk_residual = [r for r in residual if r.get("type") in DIRECT_TYPES]
-    summary = [
-        {"metric": "overall_identifier_precision", "value": precision},
-        {"metric": "overall_identifier_recall", "value": recall},
-        {"metric": "overall_identifier_f1", "value": f1},
-        {"metric": "direct_identifier_recall", "value": direct_recall},
-        {"metric": "contextual_identifier_recall", "value": contextual_recall},
-        {"metric": "residual_identifier_rate", "value": residual_rate},
-        {"metric": "high_risk_residual_identifier_rate", "value": len(high_risk_residual) / (total_tp + total_fn) if total_tp + total_fn else 0.0},
-        {"metric": "clinical_concept_preservation_rate", "value": sum(preservation_scores) / len(preservation_scores) if preservation_scores else 0.0},
-    ]
+    concept_preservation = sum(preservation_scores) / len(preservation_scores) if preservation_scores else 0.0
+    summary = {
+        "n_records": float(len(rows)),
+        "n_gold_identifiers": float(total_tp + total_fn),
+        "n_predicted_identifiers": float(total_tp + total_fp),
+        "overall_identifier_precision": precision,
+        "overall_identifier_recall": recall,
+        "overall_identifier_f1": f1,
+        "direct_identifier_recall": direct_recall,
+        "contextual_identifier_recall": contextual_recall,
+        "residual_identifier_rate": residual_rate,
+        "high_risk_residual_identifier_rate": high_risk_fn / high_risk_gold if high_risk_gold else 0.0,
+        "clinical_concept_preservation_rate": concept_preservation,
+        "over_redaction_rate": 1.0 - concept_preservation,
+    }
+    return summary, type_counts
+
+
+def evaluate_semantic_wide(rows: list[dict[str, Any]], condition: str) -> tuple[dict[str, Any], list[dict[str, Any]], list[dict[str, Any]]]:
+    summary, type_counts = _evaluate_counts(rows)
+    summary_row: dict[str, Any] = {"condition": condition}
+    summary_row.update(summary)
+
     by_type = []
     for typ, counts in sorted(type_counts.items()):
         p, r, f = prf(counts["tp"], counts["fp"], counts["fn"])
-        by_type.append({"identifier_type": typ, "precision": p, "recall": r, "f1": f, "n_gold": counts["gold"], "n_detected": counts["detected"], "n_true_positive": counts["tp"]})
-    return summary, by_type
+        by_type.append(
+            {
+                "condition": condition,
+                "identifier_type": typ,
+                "precision": p,
+                "recall": r,
+                "f1": f,
+                "n_gold": counts["gold"],
+                "n_detected": counts["detected"],
+                "n_true_positive": counts["tp"],
+            }
+        )
+
+    by_subset = []
+    subsets = sorted({str(row.get("subset", "")) for row in rows})
+    for subset in subsets:
+        subset_rows = [row for row in rows if str(row.get("subset", "")) == subset]
+        subset_summary, _ = _evaluate_counts(subset_rows)
+        subset_row: dict[str, Any] = {"condition": condition, "subset": subset}
+        subset_row.update(subset_summary)
+        by_subset.append(subset_row)
+    return summary_row, by_type, by_subset
+

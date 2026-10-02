@@ -1,0 +1,3 @@
+id,subset,span,start,end,type,risk_level,recommended_action,basis
+SIM059,contextual_paraphrased,Dana,86,90,PERSON,high,generalize,author-confirmed in review workbook
+SIM082,contextual_paraphrased,every other Tuesday,249,268,SESSION_PATTERN,medium,generalize,author-confirmed in review workbook
