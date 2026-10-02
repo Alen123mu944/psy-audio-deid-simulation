@@ -10,6 +10,6 @@ markers. It is linked to the final JSONL by the offline verifier. The workbook
 and CSV are review evidence, not an assertion that every row was approved.
 
 gold_corrections.csv records only SIM059 PERSON Dana and SIM082 SESSION_PATTERN
-every other Tuesday. The pre-correction raw input under provenance/ allows the
-verifier to establish these exact two additions. Current authoritative results
-are under outputs_for_manuscript/.
+every other Tuesday. The verifier checks both entries directly against the
+locked gold annotations and frozen correction log. Current authoritative
+results are under outputs_for_manuscript/.

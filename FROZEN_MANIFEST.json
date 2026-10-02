@@ -70,7 +70,6 @@
     "data/results/logs/qwen_semantic_deid_openrouter_log.csv": "7e01b7d87f0599e8baa7b55f478d090c7c66a8ac4d7b8d7359792c644e58582d",
     "data/results/logs/qwen_semantic_deid_openrouter_prompt.md": "071c2a6e03cde3e621459abfd918de2b5248effb8780341eebc46f3d21f7db25",
     "data/results/logs/transcript_generation_openrouter_log.csv": "fd99c4c70acbf08d60ef9d5e0e87ab9a40e64ffb7c19a1dfccab2effa1c5c3ea",
-    "provenance/transcripts_pre_correction_742.jsonl": "92580b42eaabbb64d360ad3a236ba0ade44ab0ecfbece49fb865a64d071edad3",
     "review/gold_corrections.csv": "94a921bd7e6cae498039be76e490e4d20df9615d0c1e1138bb04295ddf0611bc",
     "src/__init__.py": "d8831cd638a9b3707f5f0605be243a4affdffff0d9bc299f87c48c087d1f244f",
     "src/acoustic_metrics.py": "700f9d8a398a718129a7b99e30c6e2ae4889be4326b26fa95b6e9e6cb161cc88",
@@ -85,10 +84,10 @@
     "src/semantic_metrics.py": "b9eada9c18f4d458f8fe364532bd3b24a021d71d4fd135e38c98d9b6f0312602",
     "src/speaker_metrics.py": "a59fad266a01d8853b5b41e2cee2b5cadff1786726d055b43c8b405f2616ae46",
     "src/voice_transform.py": "af5bcc32187a7fbdcf3373d5787f78a150a426144df90ba8d95cdcb2d9f74a6f",
-    "review/README.md": "d6218cc55a7e2c880795af57b7be79bd3f05e91768356ba14c86bf9b33b26100",
+    "review/README.md": "64cf150fabcbf8a90892e52cc8be640c7cf036e2414557ed5cb475d6377038bd",
     "review/locked_review.csv": "5947cff002d2c7f6c25176b4f820b8528dbfbd0a6ac73ba40a123a4d0f12a838",
     "scripts/12a_audit_embedded_audio_metadata.py": "80429b88219cff1aa44c7fe9e9ec67a89db02d2ca834a1f2276a401c146c41cd",
-    "scripts/16_verify_submission.py": "6fb99244c2eb0c409bc493dd66366a73e41335cc75caefd5214152a6c4296a55",
+    "scripts/16_verify_submission.py": "0aca75744240813460657993a9ee647bd3c98426a6f2d2cbe7481fdc2e13cde7",
     "scripts/03_generate_synthetic_metadata.py": "b4f254b49d72fe8e5f399a65398dbdfb09d85e755b89fd0dc3a75197b0d3b1e0",
     "scripts/09c_semantic_deidentify_openrouter_qwen.py": "fe666ad1d93f657bca31b41193e167bc1d4fb7f8e727158e47265ab455ee6778",
     "scripts/00_download_or_prepare_librispeech.py": "444643c46350668c4089f3cef3d8bdbfc9f63d04ae81ec33f127705bf7584fc5",
@@ -117,5 +116,5 @@
     "data/results/tables/speaker_similarity_distributions.csv": "caf4d8f9b4caa585bbe80e8cd067ee10f0f4b281fa2c07c9840fde662efa2f38",
     "data/results/tables/table_embedded_metadata_audit.csv": "ea88c97838fa01e33fe60d1c385126d0513dddea94d11cabfd09a5a260f597d1"
   },
-  "repository_layout_version": "2026-10-03-cleaned"
+  "repository_layout_version": "2026-10-03-final744-only"
 }

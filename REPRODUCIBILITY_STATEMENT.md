@@ -17,8 +17,9 @@ version without further annotation changes. Dates remain included in scoring.
 For every method, the input text, subset assignments, clinical annotations,
 reference de-identified text, predicted annotations and automated output text
 are unchanged. Only evaluation gold was synchronized. All methods were rescored
-using the same unchanged matching and utility code. Hashes and the historical
-pre-correction input make the two changes independently inspectable.
+using the same unchanged matching and utility code. Frozen hashes, prediction
+signatures and the correction log support independent checks of the final version.
+Only the final 744-annotation semantic dataset is bundled.
 
 ## Current results and manuscript alignment
 

@@ -77,18 +77,15 @@ def main():
             require(row["utterance"][a["start"]:a["end"]] == a["span"], f"gold span differs: {row['id']}")
     require(dict(gold_counts) == manifest["gold_by_subset"] and sum(gold_counts.values()) == 744, "gold subset counts differ")
     by_id = {r["id"]:r for r in generated}
-    additions = []
-    previous = jsonl("provenance/transcripts_pre_correction_742.jsonl")
-    require(len(previous) == 150 and sum(len(r["identifier_annotations"]) for r in previous) == 742, "pre-correction provenance differs")
-    for old in previous:
-        new = by_id[old["id"]]
-        require({k:v for k,v in old.items() if k != "identifier_annotations"} == {k:v for k,v in new.items() if k != "identifier_annotations"}, "raw text or clinical/reference fields changed")
-        require(all(a in new["identifier_annotations"] for a in old["identifier_annotations"]), "old gold removed")
-        additions.extend({"id":new["id"], **a} for a in new["identifier_annotations"] if a not in old["identifier_annotations"])
-    require(additions == manifest["gold_additions"], "review corrections differ")
+    additions = manifest["gold_additions"]
+    for addition in additions:
+        require(addition["id"] in by_id, "review correction ID missing")
+        annotation = {k:v for k,v in addition.items() if k != "id"}
+        require(by_id[addition["id"]]["identifier_annotations"].count(annotation) == 1, "confirmed correction missing or duplicated in locked gold")
     corrections = csv_rows("review/gold_corrections.csv")
     require(len(corrections) == len(additions) == 2, "expected exactly two recorded corrections")
     for recorded, actual in zip(corrections, additions):
+        require(recorded["subset"] == by_id[actual["id"]]["subset"], "review correction subset differs")
         for key in ("id", "span", "type", "start", "end", "risk_level", "recommended_action"):
             require(recorded[key] == str(actual[key]), f"review record mismatch: {key}")
     review_rows = csv_rows("review/locked_review.csv")

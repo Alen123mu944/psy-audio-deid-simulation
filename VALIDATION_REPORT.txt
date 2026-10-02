@@ -6,7 +6,9 @@ Canonical results are stored in outputs_for_manuscript/. Deleted files remain
 recoverable from Git commit 2f1e678 and the local submission package.
 PASS: cleaned Git export verifies without duplicate intermediate files.
 PASS: individual evaluation scripts and full-pipeline dry-run retain valid entry points.
-PASS: frozen data, predictions, provenance and scientific source hashes unchanged.
+PASS: frozen 744 data, predictions and scientific source hashes unchanged.
+The final repository bundles only the 744-annotation semantic version.
+Review corrections are checked directly against the locked annotations.
 
 PASS: staged Git tree exported to a separate directory; all required files present.
 PASS: offline verification and table recomputation using Python standard library only.

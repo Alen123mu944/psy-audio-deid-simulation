@@ -1,6 +1,5 @@
 # Frozen files are checked by byte hash. Preserve their committed line endings.
 data/** -text
-provenance/** -text
 review/** -text
 scripts/** -text
 src/** -text
