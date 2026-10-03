@@ -140,13 +140,14 @@ def write_risk_utility_matrix() -> None:
     speaker_original = _condition(privacy, "original", "top1_speaker_id_accuracy", 1.0)
     speaker_deid = float(selected_row.get("top1_speaker_id_accuracy", 0.0) or 0.0)
     semantic_residual = _metric(semantic, "residual_identifier_rate", 0.10)
+    metadata_before = _metric(metadata, "linkage_risk_score_before", 0.767)
     metadata_after = _metric(metadata, "linkage_risk_score_after", 0.05)
     concept_pres = _metric(semantic, "clinical_concept_preservation_rate", 0.85)
     acoustic_pres = float(selected_row.get("non_f0_acoustic_preservation", 0.0) or 0.0)
     rows = [
-        {"condition": "Original", "speaker_id_accuracy": speaker_original, "semantic_residual_identifier_rate": 1.0, "metadata_linkage_risk_score": 1.0, "clinical_concept_preservation": 1.0, "acoustic_feature_preservation": 1.0, "interpretation": "Raw data retain clinical value but expose multi-source identifiers"},
-        {"condition": "Voice-only", "speaker_id_accuracy": speaker_deid, "semantic_residual_identifier_rate": 1.0, "metadata_linkage_risk_score": 1.0, "clinical_concept_preservation": 1.0, "acoustic_feature_preservation": acoustic_pres, "interpretation": f"Voice identity risk is reduced by {selected} but semantic and metadata risks remain"},
-        {"condition": "Semantic-only", "speaker_id_accuracy": speaker_original, "semantic_residual_identifier_rate": semantic_residual, "metadata_linkage_risk_score": 1.0, "clinical_concept_preservation": concept_pres, "acoustic_feature_preservation": 1.0, "interpretation": "Textual identifiers are reduced but speaker and metadata risks remain"},
+        {"condition": "Original", "speaker_id_accuracy": speaker_original, "semantic_residual_identifier_rate": 1.0, "metadata_linkage_risk_score": metadata_before, "clinical_concept_preservation": 1.0, "acoustic_feature_preservation": 1.0, "interpretation": "Raw data retain clinical value but expose multi-source identifiers"},
+        {"condition": "Voice-only", "speaker_id_accuracy": speaker_deid, "semantic_residual_identifier_rate": 1.0, "metadata_linkage_risk_score": metadata_before, "clinical_concept_preservation": 1.0, "acoustic_feature_preservation": acoustic_pres, "interpretation": f"Voice identity risk is reduced by {selected} but semantic and metadata risks remain"},
+        {"condition": "Semantic-only", "speaker_id_accuracy": speaker_original, "semantic_residual_identifier_rate": semantic_residual, "metadata_linkage_risk_score": metadata_before, "clinical_concept_preservation": concept_pres, "acoustic_feature_preservation": 1.0, "interpretation": "Textual identifiers are reduced but speaker and metadata risks remain"},
         {"condition": "Metadata-only", "speaker_id_accuracy": speaker_original, "semantic_residual_identifier_rate": 1.0, "metadata_linkage_risk_score": metadata_after, "clinical_concept_preservation": 1.0, "acoustic_feature_preservation": 1.0, "interpretation": "Auxiliary identifiers are reduced but voice and semantic risks remain"},
         {"condition": "Full_framework", "speaker_id_accuracy": speaker_deid, "semantic_residual_identifier_rate": semantic_residual, "metadata_linkage_risk_score": metadata_after, "clinical_concept_preservation": concept_pres, "acoustic_feature_preservation": acoustic_pres, "interpretation": "Combined protection addresses multi-source re-identification risks"},
     ]

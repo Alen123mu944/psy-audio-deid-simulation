@@ -113,6 +113,7 @@ def main():
             expected = qwen[source] if has_semantic else 1.0
             require(math.isclose(float(row[key]), expected, abs_tol=1e-12), f"matrix {row['condition']}: {key} differs")
     metadata_values = {r["metric"]:r["value"] for r in metadata}
+    metadata_before = metadata_values["linkage_risk_score_before"]
     voice_values = {r["metric"]:r["value"] for r in csv_rows("outputs_for_manuscript/table_voice_layer.csv")}
     selected = voice_values["selected_voice_condition"]
     privacy = {r["condition"]:r for r in csv_rows("data/results/tables/table_voice_privacy.csv")}
@@ -132,7 +133,7 @@ def main():
         expected = {
             "speaker_id_accuracy":float(privacy[voice_condition]["top1_speaker_id_accuracy"]),
             "acoustic_feature_preservation":sum(acoustic)/len(acoustic) if has_voice else 1.0,
-            "metadata_linkage_risk_score":metadata_values["linkage_risk_score_after"] if row["condition"] in {"Metadata-only","Full_framework"} else 1.0,
+            "metadata_linkage_risk_score":metadata_values["linkage_risk_score_after"] if row["condition"] in {"Metadata-only","Full_framework"} else metadata_before,
         }
         for key, value in expected.items():
             require(math.isclose(float(row[key]), float(value), rel_tol=1e-12, abs_tol=1e-12), f"matrix {row['condition']}: {key} differs")
