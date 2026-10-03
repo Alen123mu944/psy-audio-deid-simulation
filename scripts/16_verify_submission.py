@@ -42,23 +42,16 @@ def prediction_signature(rows):
 def semantic_tables():
     """Compute every active semantic table from record-level outputs, not saved CSVs."""
     computed = {}
-    all_summary, all_types, all_subsets = [], [], []
+    all_summary = []
     manifest = json.loads((ROOT/"FROZEN_MANIFEST.json").read_text())
     for method in manifest["methods"]:
         rows = jsonl(f"{OUTPUT}/transcripts_{method}.jsonl")
-        summary, types, subsets = evaluate_semantic_wide(rows, method)
+        summary, subsets = evaluate_semantic_wide(rows, method, include_subsets=method == "qwen_llm_semantic_layer")
         all_summary.append(summary)
         if method == "qwen_llm_semantic_layer":
             computed["table_semantic_qwen_layer.csv"] = [summary]
-            computed["table_semantic_qwen_by_type.csv"] = types
             computed["table_semantic_qwen_by_subset.csv"] = subsets
-        else:
-            all_types.extend(types)
-            all_subsets.extend(subsets)
-    computed["table_semantic_comparison.csv"] = all_summary[:2]
     computed["table_semantic_comparison_with_qwen.csv"] = all_summary
-    computed["table_semantic_by_type.csv"] = all_types
-    computed["table_semantic_by_subset.csv"] = all_subsets
     return computed
 
 def main():

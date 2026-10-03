@@ -55,7 +55,7 @@ def _load_embedding(path: str) -> np.ndarray:
     return np.load(project_path(path))
 
 
-def evaluate_embeddings(rows: list[dict]) -> tuple[list[dict], list[dict]]:
+def evaluate_embeddings(rows: list[dict]) -> list[dict]:
     items = []
     for row in rows:
         embedding = _load_embedding(row["embedding_path"])
@@ -80,7 +80,6 @@ def evaluate_embeddings(rows: list[dict]) -> tuple[list[dict], list[dict]]:
         if sorted(clips) != [1, 2, 3, 4, 5]:
             raise ValueError(f"Speaker {speaker} must have original clips C1–C5 exactly once.")
 
-    similarities = []
     original_by_speaker: dict[str, list[dict]] = defaultdict(list)
     for item in original:
         original_by_speaker[item["speaker_id"]].append(item)
@@ -90,11 +89,6 @@ def evaluate_embeddings(rows: list[dict]) -> tuple[list[dict], list[dict]]:
         for a, b in combinations(speaker_items, 2):
             score = cosine_similarity(a["embedding"], b["embedding"])
             same_speaker_scores.append(score)
-            similarities.append({"condition": "original_same_speaker", "cosine_similarity": score})
-
-    for a, b in combinations(original, 2):
-        if a["speaker_id"] != b["speaker_id"]:
-            similarities.append({"condition": "different_speaker", "cosine_similarity": cosine_similarity(a["embedding"], b["embedding"])})
 
     enrollment_by_speaker: dict[str, list[np.ndarray]] = defaultdict(list)
     original_test = []
@@ -135,14 +129,13 @@ def evaluate_embeddings(rows: list[dict]) -> tuple[list[dict], list[dict]]:
         if any(item["speaker_id"] != original_by_id[item["audio_id"]]["speaker_id"] for item in condition_items):
             raise ValueError(f"Speaker labels do not match original for condition {condition}.")
         # Use only C4/C5 for both original and transformed recognition/verification.
-        # Paired cosine distributions still describe all 150 original/transformed clips.
+        # Mean paired cosine similarity still describes all 150 original/transformed clips.
         condition_test = [item for item in condition_items if item["audio_id"] in heldout_ids]
         original_deid_scores = []
         for item in condition_items:
             if item["audio_id"] in original_by_id:
                 score = cosine_similarity(original_by_id[item["audio_id"]]["embedding"], item["embedding"])
                 original_deid_scores.append(score)
-                similarities.append({"condition": f"original_vs_{condition}", "cosine_similarity": score})
         labels, scores = verification_trials(condition_test, centroids)
         method = condition_items[0].get("method", "") if condition_items else ""
         parameter = condition_items[0].get("parameter", "") if condition_items else ""
@@ -159,4 +152,4 @@ def evaluate_embeddings(rows: list[dict]) -> tuple[list[dict], list[dict]]:
                 **evaluation_counts,
             }
         )
-    return summary, similarities
+    return summary

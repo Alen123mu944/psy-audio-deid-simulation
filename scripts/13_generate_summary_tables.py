@@ -55,7 +55,7 @@ def _semantic_summary_rows() -> list[dict[str, str]]:
     qwen = read_csv_dicts("data/results/tables/table_semantic_qwen_layer.csv") or read_csv_dicts("outputs_for_manuscript/table_semantic_qwen_layer.csv")
     if qwen:
         return qwen
-    comparison = read_csv_dicts("data/results/tables/table_semantic_comparison.csv") or read_csv_dicts("outputs_for_manuscript/table_semantic_comparison.csv")
+    comparison = read_csv_dicts("data/results/tables/table_semantic_comparison_with_qwen.csv") or read_csv_dicts("outputs_for_manuscript/table_semantic_comparison_with_qwen.csv")
     return [row for row in comparison if row.get("condition") == "full_semantic_layer"]
 
 
@@ -155,12 +155,8 @@ def write_risk_utility_matrix() -> None:
 
 def copy_available_tables() -> None:
     for src, dst in [
-        ("data/results/tables/table_semantic_comparison.csv", "table_semantic_comparison.csv"),
-        ("data/results/tables/table_semantic_by_subset.csv", "table_semantic_by_subset.csv"),
-        ("data/results/tables/table_semantic_by_type.csv", "table_semantic_by_type.csv"),
         ("data/results/tables/table_semantic_qwen_layer.csv", "table_semantic_qwen_layer.csv"),
         ("data/results/tables/table_semantic_qwen_by_subset.csv", "table_semantic_qwen_by_subset.csv"),
-        ("data/results/tables/table_semantic_qwen_by_type.csv", "table_semantic_qwen_by_type.csv"),
         ("data/results/tables/table_semantic_comparison_with_qwen.csv", "table_semantic_comparison_with_qwen.csv"),
         ("data/results/tables/table_metadata_layer.csv", "table_metadata_layer.csv"),
         ("data/results/tables/table_metadata_by_subset.csv", "table_metadata_by_subset.csv"),

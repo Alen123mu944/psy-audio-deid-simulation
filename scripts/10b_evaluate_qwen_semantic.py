@@ -20,7 +20,6 @@ SUMMARY_FIELDS = [
     "clinical_concept_preservation_rate",
     "over_redaction_rate",
 ]
-BY_TYPE_FIELDS = ["condition", "identifier_type", "precision", "recall", "f1", "n_gold", "n_detected", "n_true_positive"]
 BY_SUBSET_FIELDS = ["condition", "subset"] + [field for field in SUMMARY_FIELDS if field != "condition"]
 
 
@@ -28,12 +27,11 @@ def main() -> None:
     rows = read_jsonl("data/processed/transcripts_deidentified/transcripts_qwen_llm_semantic_layer.jsonl")
     if not rows:
         raise SystemExit("No Qwen deidentified transcript JSONL found. Run 09c_semantic_deidentify_openrouter_qwen.py first.")
-    summary, by_type, by_subset = evaluate_semantic_wide(rows, "qwen_llm_semantic_layer")
+    summary, by_subset = evaluate_semantic_wide(rows, "qwen_llm_semantic_layer", include_subsets=True)
     write_csv("data/results/tables/table_semantic_qwen_layer.csv", [summary], SUMMARY_FIELDS)
-    write_csv("data/results/tables/table_semantic_qwen_by_type.csv", by_type, BY_TYPE_FIELDS)
     write_csv("data/results/tables/table_semantic_qwen_by_subset.csv", by_subset, BY_SUBSET_FIELDS)
 
-    comparison = read_csv_dicts("data/results/tables/table_semantic_comparison.csv")
+    comparison = read_csv_dicts("data/results/tables/table_semantic_comparison_with_qwen.csv") or read_csv_dicts("outputs_for_manuscript/table_semantic_comparison_with_qwen.csv")
     merged = [row for row in comparison if row.get("condition") != "qwen_llm_semantic_layer"]
     merged.append({key: str(summary.get(key, "")) for key in SUMMARY_FIELDS})
     write_csv("data/results/tables/table_semantic_comparison_with_qwen.csv", merged, SUMMARY_FIELDS)

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from collections import Counter, defaultdict
 from typing import Any
 
 
@@ -60,11 +59,10 @@ def clinical_concept_preservation(row: dict[str, Any]) -> float:
     return kept / len(concepts)
 
 
-def _evaluate_counts(rows: list[dict[str, Any]]) -> tuple[dict[str, float], dict[str, Counter]]:
+def _evaluate_counts(rows: list[dict[str, Any]]) -> dict[str, float]:
     total_tp = total_fp = total_fn = 0
     direct_tp = direct_fn = contextual_tp = contextual_fn = 0
     high_risk_gold = high_risk_fn = 0
-    type_counts = defaultdict(lambda: Counter(tp=0, fp=0, fn=0, gold=0, detected=0))
     preservation_scores = []
 
     for row in rows:
@@ -72,14 +70,12 @@ def _evaluate_counts(rows: list[dict[str, Any]]) -> tuple[dict[str, float], dict
         pred = row.get("predicted_identifier_annotations", [])
         tp, fp, fn, matches = match_annotations(gold, pred)
         matched_gold = {m["gold_index"] for m in matches}
-        matched_pred = {m["pred_index"] for m in matches}
         total_tp += tp
         total_fp += fp
         total_fn += fn
         preservation_scores.append(clinical_concept_preservation(row))
         for idx, g in enumerate(gold):
             typ = str(g.get("type"))
-            type_counts[typ]["gold"] += 1
             is_matched = idx in matched_gold
             if is_matched:
                 if typ in DIRECT_TYPES:
@@ -95,16 +91,6 @@ def _evaluate_counts(rows: list[dict[str, Any]]) -> tuple[dict[str, float], dict
                 high_risk_gold += 1
                 if not is_matched:
                     high_risk_fn += 1
-        for p in pred:
-            type_counts[str(p.get("type"))]["detected"] += 1
-        for match in matches:
-            gold_type = str(gold[match["gold_index"]].get("type"))
-            pred_type = str(pred[match["pred_index"]].get("type"))
-            if gold_type == pred_type:
-                type_counts[gold_type]["tp"] += 1
-        for typ, counts in type_counts.items():
-            counts["fn"] = counts["gold"] - counts["tp"]
-            counts["fp"] = counts["detected"] - counts["tp"]
 
     precision, recall, f1 = prf(total_tp, total_fp, total_fn)
     direct_recall = direct_tp / (direct_tp + direct_fn) if direct_tp + direct_fn else 0.0
@@ -125,37 +111,22 @@ def _evaluate_counts(rows: list[dict[str, Any]]) -> tuple[dict[str, float], dict
         "clinical_concept_preservation_rate": concept_preservation,
         "over_redaction_rate": 1.0 - concept_preservation,
     }
-    return summary, type_counts
+    return summary
 
 
-def evaluate_semantic_wide(rows: list[dict[str, Any]], condition: str) -> tuple[dict[str, Any], list[dict[str, Any]], list[dict[str, Any]]]:
-    summary, type_counts = _evaluate_counts(rows)
+def evaluate_semantic_wide(
+    rows: list[dict[str, Any]], condition: str, *, include_subsets: bool = False
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    summary = _evaluate_counts(rows)
     summary_row: dict[str, Any] = {"condition": condition}
     summary_row.update(summary)
 
-    by_type = []
-    for typ, counts in sorted(type_counts.items()):
-        p, r, f = prf(counts["tp"], counts["fp"], counts["fn"])
-        by_type.append(
-            {
-                "condition": condition,
-                "identifier_type": typ,
-                "precision": p,
-                "recall": r,
-                "f1": f,
-                "n_gold": counts["gold"],
-                "n_detected": counts["detected"],
-                "n_true_positive": counts["tp"],
-            }
-        )
-
     by_subset = []
-    subsets = sorted({str(row.get("subset", "")) for row in rows})
+    subsets = sorted({str(row.get("subset", "")) for row in rows}) if include_subsets else []
     for subset in subsets:
         subset_rows = [row for row in rows if str(row.get("subset", "")) == subset]
-        subset_summary, _ = _evaluate_counts(subset_rows)
+        subset_summary = _evaluate_counts(subset_rows)
         subset_row: dict[str, Any] = {"condition": condition, "subset": subset}
         subset_row.update(subset_summary)
         by_subset.append(subset_row)
-    return summary_row, by_type, by_subset
-
+    return summary_row, by_subset

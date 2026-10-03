@@ -22,8 +22,6 @@ SUMMARY_FIELDS = [
     "over_redaction_rate",
 ]
 
-BY_TYPE_FIELDS = ["condition", "identifier_type", "precision", "recall", "f1", "n_gold", "n_detected", "n_true_positive"]
-BY_SUBSET_FIELDS = ["condition", "subset"] + [field for field in SUMMARY_FIELDS if field != "condition"]
 
 
 def main() -> None:
@@ -32,22 +30,16 @@ def main() -> None:
         ("full_semantic_layer", "data/processed/transcripts_deidentified/transcripts_full_semantic_layer.jsonl"),
     ]
     summary_rows = []
-    by_type_rows = []
-    by_subset_rows = []
     for condition, path in inputs:
         rows = read_jsonl(path)
         if not rows:
             raise SystemExit(f"No deidentified transcript JSONL found at {path}. Run 09_semantic_deidentify_rules.py first.")
-        summary, by_type, by_subset = evaluate_semantic_wide(rows, condition=condition)
+        summary, _ = evaluate_semantic_wide(rows, condition=condition)
         summary_rows.append(summary)
-        by_type_rows.extend(by_type)
-        by_subset_rows.extend(by_subset)
 
-    write_csv("data/results/tables/table_semantic_comparison.csv", summary_rows, SUMMARY_FIELDS)
-    write_csv("data/results/tables/table_semantic_by_type.csv", by_type_rows, BY_TYPE_FIELDS)
-    write_csv("data/results/tables/table_semantic_by_subset.csv", by_subset_rows, BY_SUBSET_FIELDS)
+    write_csv("data/results/tables/table_semantic_comparison_with_qwen.csv", summary_rows, SUMMARY_FIELDS)
 
-    print("Wrote semantic comparison, by-type and by-subset tables.")
+    print("Wrote rule-based rows for the semantic comparison table.")
 
 
 if __name__ == "__main__":
