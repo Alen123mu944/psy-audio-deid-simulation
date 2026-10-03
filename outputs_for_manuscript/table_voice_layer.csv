@@ -1,8 +1,8 @@
 metric,value
 selected_voice_condition,pitch_s4
 speaker_id_accuracy_original,1.0
-speaker_id_accuracy_selected,0.24666666666666667
+speaker_id_accuracy_selected,0.2
 speaker_verification_eer_original,0.0
-speaker_verification_eer_selected,0.26666666666666666
+speaker_verification_eer_selected,0.3
 non_f0_acoustic_preservation_selected,0.9270061590019164
 pause_ratio_pcc_selected,0.9398240302894216

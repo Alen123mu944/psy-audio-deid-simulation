@@ -14,7 +14,7 @@ def main() -> None:
     write_csv(
         "data/results/tables/table_voice_privacy.csv",
         summary,
-        ["condition", "method", "parameter", "mean_cosine_similarity", "top1_speaker_id_accuracy", "linkage_success_rate", "speaker_verification_eer"],
+        ["condition", "method", "parameter", "mean_cosine_similarity", "top1_speaker_id_accuracy", "linkage_success_rate", "speaker_verification_eer", "n_enrollment_clips", "n_test_clips", "n_genuine_trials", "n_impostor_trials"],
     )
     write_csv("data/results/tables/speaker_similarity_distributions.csv", similarities, ["condition", "cosine_similarity"])
     print("Wrote real speaker privacy tables from SpeechBrain embeddings, including EER.")

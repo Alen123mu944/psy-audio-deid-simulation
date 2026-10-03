@@ -123,6 +123,12 @@ def main():
     voice_values = {r["metric"]:r["value"] for r in csv_rows("outputs_for_manuscript/table_voice_layer.csv")}
     selected = voice_values["selected_voice_condition"]
     privacy = {r["condition"]:r for r in csv_rows("data/results/tables/table_voice_privacy.csv")}
+    if "voice_evaluation" in manifest:
+        protocol = manifest["voice_evaluation"]
+        require(set(privacy) == set(protocol["conditions"]), "voice conditions differ from held-out protocol")
+        for condition, row in privacy.items():
+            for field in ("n_enrollment_clips", "n_test_clips", "n_genuine_trials", "n_impostor_trials"):
+                require(int(row[field]) == protocol[field], f"{condition}: {field} differs from held-out protocol")
     utility = csv_rows("data/results/tables/table_voice_utility.csv")
     acoustic_features = {"duration","RMS_energy","zero_crossing_rate","spectral_centroid","spectral_bandwidth","pause_ratio"}
     acoustic = [float(r["pearson_r"]) for r in utility if r["condition"] == selected and r["feature"] in acoustic_features]

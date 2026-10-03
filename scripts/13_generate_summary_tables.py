@@ -90,6 +90,8 @@ def write_voice_method_comparison() -> list[dict[str, object]]:
                 "f0_mean_pcc": f0_pcc,
                 "f0_mean_absolute_error": f0_mae,
                 "pause_ratio_pcc": pause_pcc,
+                "n_enrollment_clips": row.get("n_enrollment_clips", ""),
+                "n_test_clips": row.get("n_test_clips", ""),
             }
         )
     fields = [
@@ -103,6 +105,8 @@ def write_voice_method_comparison() -> list[dict[str, object]]:
         "f0_mean_pcc",
         "f0_mean_absolute_error",
         "pause_ratio_pcc",
+        "n_enrollment_clips",
+        "n_test_clips",
     ]
     write_csv("data/results/tables/table_voice_method_comparison.csv", rows, fields)
     copy_to_manuscript("data/results/tables/table_voice_method_comparison.csv", "table_voice_method_comparison.csv")

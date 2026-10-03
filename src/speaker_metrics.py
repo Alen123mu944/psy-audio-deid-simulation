@@ -73,6 +73,12 @@ def evaluate_embeddings(rows: list[dict]) -> tuple[list[dict], list[dict]]:
     original = [item for item in items if item["condition"] == "original"]
     conditions = sorted({item["condition"] for item in items if item["condition"] != "original"})
     original_by_id = {item["audio_id"]: item for item in original}
+    if not original or len(original_by_id) != len(original):
+        raise ValueError("Original embeddings must have unique audio IDs and be nonempty.")
+    for speaker in {item["speaker_id"] for item in original}:
+        clips = [int(item["audio_id"].split("_C")[-1]) for item in original if item["speaker_id"] == speaker]
+        if sorted(clips) != [1, 2, 3, 4, 5]:
+            raise ValueError(f"Speaker {speaker} must have original clips C1–C5 exactly once.")
 
     similarities = []
     original_by_speaker: dict[str, list[dict]] = defaultdict(list)
@@ -99,6 +105,13 @@ def evaluate_embeddings(rows: list[dict]) -> tuple[list[dict], list[dict]]:
         else:
             original_test.append(item)
     centroids = {speaker: np.mean(embeddings, axis=0) for speaker, embeddings in enrollment_by_speaker.items() if embeddings}
+    heldout_ids = {item["audio_id"] for item in original_test}
+    evaluation_counts = {
+        "n_enrollment_clips": sum(len(group) for group in enrollment_by_speaker.values()),
+        "n_test_clips": len(original_test),
+        "n_genuine_trials": len(original_test),
+        "n_impostor_trials": len(original_test) * (len(centroids) - 1),
+    }
 
     labels, scores = verification_trials(original_test, centroids)
     summary = [
@@ -110,21 +123,30 @@ def evaluate_embeddings(rows: list[dict]) -> tuple[list[dict], list[dict]]:
             "top1_speaker_id_accuracy": nearest_centroid_accuracy(original_test, centroids),
             "linkage_success_rate": nearest_centroid_accuracy(original_test, centroids),
             "speaker_verification_eer": equal_error_rate(labels, scores),
+            **evaluation_counts,
         }
     ]
 
     for condition in conditions:
         condition_items = [item for item in items if item["condition"] == condition]
+        condition_by_id = {item["audio_id"]: item for item in condition_items}
+        if len(condition_by_id) != len(condition_items) or set(condition_by_id) != set(original_by_id):
+            raise ValueError(f"Condition {condition} must contain exactly the same unique clip IDs as original.")
+        if any(item["speaker_id"] != original_by_id[item["audio_id"]]["speaker_id"] for item in condition_items):
+            raise ValueError(f"Speaker labels do not match original for condition {condition}.")
+        # Use only C4/C5 for both original and transformed recognition/verification.
+        # Paired cosine distributions still describe all 150 original/transformed clips.
+        condition_test = [item for item in condition_items if item["audio_id"] in heldout_ids]
         original_deid_scores = []
         for item in condition_items:
             if item["audio_id"] in original_by_id:
                 score = cosine_similarity(original_by_id[item["audio_id"]]["embedding"], item["embedding"])
                 original_deid_scores.append(score)
                 similarities.append({"condition": f"original_vs_{condition}", "cosine_similarity": score})
-        labels, scores = verification_trials(condition_items, centroids)
+        labels, scores = verification_trials(condition_test, centroids)
         method = condition_items[0].get("method", "") if condition_items else ""
         parameter = condition_items[0].get("parameter", "") if condition_items else ""
-        accuracy = nearest_centroid_accuracy(condition_items, centroids)
+        accuracy = nearest_centroid_accuracy(condition_test, centroids)
         summary.append(
             {
                 "condition": condition,
@@ -134,6 +156,7 @@ def evaluate_embeddings(rows: list[dict]) -> tuple[list[dict], list[dict]]:
                 "top1_speaker_id_accuracy": accuracy,
                 "linkage_success_rate": accuracy,
                 "speaker_verification_eer": equal_error_rate(labels, scores),
+                **evaluation_counts,
             }
         )
     return summary, similarities
